@@ -116,7 +116,9 @@ footer.site a{text-decoration:none}footer.site a:hover{text-decoration:underline
         <fieldset><legend>Trace souhaitée <span class="req">(obligatoire)</span></legend><label class="opt"><input type="radio" name="trace" value="Route" required> Route</label><label class="opt"><input type="radio" name="trace" value="Gravel" required> Gravel</label></fieldset>
         <fieldset><legend>Option Proposition Spot Bivouac</legend><label class="opt"><input type="checkbox" name="bivouac"> Option Proposition Spot Bivouac</label></fieldset>
         <div class="field"><label class="l" for="x">Demandes/informations/requêtes complémentaires ? <span class="req">(obligatoire)</span><span class="hint">Dis m’en plus sur toi, ton niveau, tes goûts, ta pratique, tes attentes, ton matériel de bivouac le cas échéant, les modalités de ce voyage, afin que je puisse cerner au mieux tes attentes !</span></label><textarea id="x" name="more" required></textarea></div>
-        <button class="btn" type="submit">Envoyer</button>
+        <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <button class="btn" type="submit" id="fsend">Envoyer</button>
+        <p class="ok" id="ferr" role="alert" hidden>L’envoi a échoué. Réessaie dans un instant ou écris directement à mapmax555@gmail.com.</p>
       </form>
     </div>
 
@@ -170,11 +172,23 @@ footer.site a{text-decoration:none}footer.site a:hover{text-decoration:underline
 (function(){var d=document.getElementById('lang');
 document.addEventListener('click',function(ev){if(d.open&&!d.contains(ev.target))d.open=false});
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape')d.open=false});})();
-// Formular: reine Frontend-Demo (kein Versand). Hier später Formspree/Netlify Forms o. ä. anbinden.
-(function(){var f=document.getElementById('req'),box=document.getElementById('demande');
-f.addEventListener('submit',function(ev){ev.preventDefault();
+// Formular: Versand per FormSubmit an mapmax555@gmail.com (ohne eigenen Server)
+(function(){var f=document.getElementById('req'),box=document.getElementById('demande'),
+btn=document.getElementById('fsend'),err=document.getElementById('ferr'),lbl=btn.textContent;
+f.addEventListener('submit',function(ev){ev.preventDefault();err.hidden=true;
 if(!f.checkValidity()){f.reportValidity();return}
-box.classList.add('sent');box.scrollIntoView({behavior:'smooth',block:'start'});});
+var fd=new FormData(f),data={};
+fd.forEach(function(v,k){data[k]=v});
+data.bivouac=f.elements.bivouac.checked?'oui / yes / ja':'non';
+data._subject='Nouvelle demande de trace – MapMax555';
+data._template='table';data._captcha='false';
+btn.disabled=true;btn.textContent='…';
+fetch('https://formsubmit.co/ajax/mapmax555@gmail.com',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+.then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
+.then(function(x){if(!x.ok||String(x.j.success)==='false')throw new Error(x.j.message||'fail');
+box.classList.add('sent');box.scrollIntoView({behavior:'smooth',block:'start'});})
+.catch(function(){err.hidden=false})
+.then(function(){btn.disabled=false;btn.textContent=lbl});});
 document.getElementById('back').addEventListener('click',function(){box.classList.remove('sent');f.reset();});})();
 </script>
 <script>(function(){
